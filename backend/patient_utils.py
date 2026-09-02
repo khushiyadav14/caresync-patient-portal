@@ -21,7 +21,7 @@ def format_patient_name(first_name: str, last_name: str) -> str:
     Returns:
         str: The formatted name string
     """
-    # Strip extra spaces from both names before combining them
+   
     first_name = first_name.strip()
     last_name = last_name.strip()
     
@@ -29,7 +29,7 @@ def format_patient_name(first_name: str, last_name: str) -> str:
     return f"{last_name}, {first_name}"
 
 
-def is_valid_patient_id(patient_id: str) -> bool:
+def is_valid_patient_id(patient_id:str) -> bool:
     """
     Checks whether a patient ID follows the required format.
     
@@ -46,7 +46,8 @@ def is_valid_patient_id(patient_id: str) -> bool:
     """
     # Import the regular expression module for pattern matching
     import re
-    
+
+    patient_id = patient_id.strip()
     # Define the required pattern: PT- followed by exactly 6 digits
     pattern = r"^PT-\d{6}$"
     
