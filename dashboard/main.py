@@ -32,11 +32,12 @@ app.add_middleware(
 # We do not reuse a single connection because MySQL closes idle connections.
 def get_db():
     return mysql.connector.connect(
-        host='localhost',
+        host="127.0.0.1",
         port=3307,
-        user='root',
-        password='admin',     # change this to your own MySQL password
-        database='caresync'
+        user="root",
+        password="admin",
+        database="caresync",
+        use_pure=True
     )
 
 # ── ENDPOINT 1: Summary numbers ──────────────────────────────────────────────
@@ -174,6 +175,7 @@ def get_doctors():
         GROUP BY d.doctor_id, d.full_name, d.specialisation
         ORDER BY total_appointments DESC
         '''
+
     )
     doctors = cursor.fetchall()
 
@@ -182,3 +184,165 @@ def get_doctors():
 
     return {'doctors': doctors}
 
+# ── ENDPOINT 5: Revenue Trend ─────────────────────────────────────────────────
+# URL: http://127.0.0.1:8000/revenue-trend
+# Returns: Monthly billed amount and collected amount for last 12 months
+
+@app.get('/revenue-trend')
+def get_revenue_trend():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        '''
+        SELECT
+            DATE_FORMAT(bill_date, '%Y-%m') AS month_key,
+            DATE_FORMAT(bill_date, '%b %Y') AS month,
+            ROUND(SUM(total_amount), 2) AS billed,
+            ROUND(SUM(amount_paid), 2) AS collected
+        FROM billing
+        WHERE bill_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        GROUP BY
+            DATE_FORMAT(bill_date, '%Y-%m'),
+            DATE_FORMAT(bill_date, '%b %Y')
+        ORDER BY month_key
+        '''
+    )
+
+    rows = cursor.fetchall()
+
+    for row in rows:
+        row['billed'] = float(row['billed'] or 0)
+        row['collected'] = float(row['collected'] or 0)
+
+    cursor.close()
+    db.close()
+
+    return {'revenue_trend': rows}
+
+
+# ── ENDPOINT 6: Appointment Heatmap ───────────────────────────────────────────
+# URL: http://127.0.0.1:8000/appointment-heatmap
+# Returns: Appointment count grouped by weekday and hour
+
+@app.get('/appointment-heatmap')
+def get_appointment_heatmap():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        '''
+        SELECT
+            WEEKDAY(appointment_date) AS day_number,
+            DAYNAME(appointment_date) AS day,
+            HOUR(appointment_time) AS hour,
+            COUNT(*) AS total_appointments
+        FROM appointment
+        GROUP BY
+            WEEKDAY(appointment_date),
+            DAYNAME(appointment_date),
+            HOUR(appointment_time)
+        ORDER BY
+            day_number,
+            hour
+        '''
+    )
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return {'appointment_heatmap': rows}
+
+
+# ── ENDPOINT 7: Blood Group Distribution ─────────────────────────────────────
+# URL: http://127.0.0.1:8000/blood-group-distribution
+# Returns: Number of active patients belonging to each blood group
+
+@app.get('/blood-group-distribution')
+def get_blood_group_distribution():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        '''
+        SELECT
+            COALESCE(blood_group, 'Unknown') AS blood_group,
+            COUNT(*) AS total_patients
+        FROM patient
+        WHERE is_deleted = 0
+        GROUP BY blood_group
+        ORDER BY total_patients DESC
+        '''
+    )
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return {'blood_group_distribution': rows}
+
+
+    # ── ENDPOINT 8: Get Single Patient ───────────────────────────────────────────
+# URL: http://127.0.0.1:8000/patients/{patient_id}
+# Example: http://127.0.0.1:8000/patients/1
+# Returns: detailed information for one active patient
+
+from fastapi import HTTPException
+
+
+@app.get('/patients/{patient_id}')
+def get_patient_by_id(patient_id: int):
+    db = None
+    cursor = None
+
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute(
+            '''
+            SELECT
+                patient_id,
+                full_name,
+                gender,
+                blood_group,
+                DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
+                DATE_FORMAT(created_at, '%d %b %Y %h:%i %p') AS registered_on
+            FROM patient
+            WHERE patient_id = %s
+              AND is_deleted = 0
+            ''',
+            (patient_id,)
+        )
+
+        patient = cursor.fetchone()
+
+        # If no patient exists with this ID
+        if patient is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f'Patient with ID {patient_id} not found'
+            )
+
+        return {
+            'patient': patient
+        }
+
+    except HTTPException:
+        raise
+
+    except mysql.connector.Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f'Database error: {str(e)}'
+        )
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if db and db.is_connected():
+            db.close()
