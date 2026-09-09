@@ -1,435 +1,2828 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>CareSync Hospital Dashboard</title>
 
-    <!--
-        Vue 3 is loaded from a CDN (Content Delivery Network).
-        This means no installation is needed.
-        The browser downloads Vue automatically when the page opens.
-    -->
+
+    <!-- ================= VUE 3 ================= -->
+
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
+
+    <!-- ================= CHART.JS ================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <!-- ================= CHART DATA LABELS ================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+
     <style>
-        /* ── Reset and base ──────────────────────────────── */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* =====================================================
+           RESET
+        ===================================================== */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        /* =====================================================
+           BODY
+        ===================================================== */
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: "Segoe UI", Arial, sans-serif;
             background: #f0f2f5;
             color: #1a1a1a;
         }
 
-        /* ── Top navigation bar ──────────────────────────── */
+
+        /* =====================================================
+           NAVBAR
+        ===================================================== */
+
         .navbar {
             background: #1f3864;
-            color: #ffffff;
+            color: white;
+
             padding: 16px 32px;
+
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
-        .navbar h1 { font-size: 22px; font-weight: 600; }
-        .navbar span { font-size: 14px; opacity: 0.8; }
 
-        /* ── Page wrapper ────────────────────────────────── */
-        .page { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 
-        /* ── Section headings ────────────────────────────── */
+        .navbar h1 {
+            font-size: 22px;
+        }
+
+
+        .navbar span {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+
+        /* =====================================================
+           PAGE
+        ===================================================== */
+
+        .page {
+            max-width: 1200px;
+            margin: auto;
+            padding: 30px 24px;
+        }
+
+
+        /* =====================================================
+           SECTION TITLE
+        ===================================================== */
+
         .section-title {
             font-size: 18px;
             font-weight: 600;
+
             color: #1f3864;
+
             margin-bottom: 16px;
-            padding-bottom: 6px;
+
             border-bottom: 2px solid #1f3864;
+
+            padding-bottom: 7px;
         }
 
-        /* ── Summary cards ───────────────────────────────── */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 24px 20px;
-            border-left: 4px solid #1f3864;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        }
-        .card .label {
-            font-size: 13px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        .card .value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #1f3864;
-        }
-        .card.red   { border-left-color: #c0392b; }
-        .card.red .value { color: #c0392b; }
-        .card.green { border-left-color: #1a7a4a; }
-        .card.green .value { color: #1a7a4a; }
 
-        /* ── Tab buttons ─────────────────────────────────── */
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-        .tab-btn {
-            padding: 8px 20px;
-            border: 2px solid #1f3864;
-            background: #ffffff;
-            color: #1f3864;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.15s;
-        }
-        .tab-btn.active { background: #1f3864; color: #ffffff; }
+        /* =====================================================
+           STATUS
+        ===================================================== */
 
-        /* ── Search box ──────────────────────────────────── */
-        .search-box {
-            width: 100%;
-            max-width: 360px;
-            padding: 8px 14px;
-            border: 1px solid #cccccc;
-            border-radius: 4px;
-            font-size: 14px;
-            margin-bottom: 16px;
+        .status {
+            background: #eaf6ea;
+            color: #247024;
+
+            padding: 12px 15px;
+
+            border-radius: 7px;
+
+            margin-bottom: 25px;
+        }
+
+
+        /* =====================================================
+           ERROR
+        ===================================================== */
+
+        .error {
+            background: #fdeaea;
+            color: #b42318;
+
+            padding: 15px;
+
+            border-radius: 7px;
+
+            margin-bottom: 20px;
+        }
+
+
+        /* =====================================================
+           EMPTY
+        ===================================================== */
+
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+        }
+
+
+        /* =====================================================
+           PATIENT SEARCH
+        ===================================================== */
+
+        .patient-search-section {
+
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 12px;
+
+            margin-bottom: 30px;
+
+            box-shadow:
+                0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+
+        .patient-search-box {
+
+            display: flex;
+
+            gap: 12px;
+
+            flex-wrap: wrap;
+        }
+
+
+        .patient-search-box input {
+
+            flex: 1;
+
+            min-width: 220px;
+
+            padding: 13px 15px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 7px;
+
+            font-size: 15px;
+
             outline: none;
         }
-        .search-box:focus { border-color: #1f3864; }
 
-        /* ── Data table ──────────────────────────────────── */
-        .table-wrap {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            overflow-x: auto;
-            margin-bottom: 40px;
+
+        .patient-search-box input:focus {
+
+            border-color: #1f3864;
+
+            box-shadow:
+                0 0 0 3px rgba(31, 56, 100, 0.1);
         }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th {
+
+
+        .patient-search-box button {
+
+            padding: 13px 32px;
+
+            border: none;
+
+            border-radius: 7px;
+
             background: #1f3864;
-            color: #ffffff;
-            padding: 12px 16px;
-            text-align: left;
+
+            color: white;
+
+            font-size: 15px;
+
             font-weight: 600;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+
+        .patient-search-box button:hover {
+
+            background: #162a4d;
+        }
+
+
+        .patient-search-box button:disabled {
+
+            opacity: 0.6;
+
+            cursor: not-allowed;
+        }
+
+
+        .patient-error {
+
+            margin-top: 18px;
+
+            padding: 14px;
+
+            background: #fee2e2;
+
+            color: #991b1b;
+
+            border-radius: 7px;
+
+            font-weight: 600;
+        }
+
+
+        .patient-result {
+
+            margin-top: 25px;
+
+            padding-top: 20px;
+
+            border-top: 1px solid #e2e8f0;
+        }
+
+
+        .patient-result h3 {
+
+            color: #1f3864;
+        }
+
+
+        .patient-details-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(200px, 1fr));
+
+            gap: 15px;
+
+            margin-top: 18px;
+        }
+
+
+        .detail-card {
+
+            background: #f8fafc;
+
+            padding: 18px;
+
+            border-radius: 9px;
+
+            border-left: 4px solid #1f3864;
+        }
+
+
+        .detail-card span {
+
+            display: block;
+
+            color: #64748b;
+
             font-size: 13px;
-        }
-        td { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; }
-        tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) td { background: #fafafa; }
 
-        /* ── Status badges ───────────────────────────────── */
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+
+        .detail-card strong {
+
+            color: #1f3864;
+
+            font-size: 17px;
+
+            word-break: break-word;
+        }
+
+
+        /* =====================================================
+           SUMMARY CARDS
+        ===================================================== */
+
+        .cards {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+
+            gap: 16px;
+
+            margin-bottom: 35px;
+        }
+
+
+        .card {
+
+            background: white;
+
+            border-radius: 8px;
+
+            padding: 22px;
+
+            border-left: 4px solid #1f3864;
+
+            box-shadow:
+                0 1px 5px rgba(0, 0, 0, 0.08);
+        }
+
+
+        .card.red {
+
+            border-left-color: #c0392b;
+        }
+
+
+        .card.green {
+
+            border-left-color: #1a7a4a;
+        }
+
+
+        .card .label {
+
+            font-size: 13px;
+
+            color: #555;
+
+            margin-bottom: 8px;
+
+            text-transform: uppercase;
+        }
+
+
+        .card .value {
+
+            font-size: 28px;
+
+            font-weight: bold;
+
+            color: #1f3864;
+        }
+
+
+        .card.red .value {
+
+            color: #c0392b;
+        }
+
+
+        .card.green .value {
+
+            color: #1a7a4a;
+        }
+
+
+        /* =====================================================
+           TABS
+        ===================================================== */
+
+        .tabs {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            margin-bottom: 20px;
+        }
+
+
+        .tab-btn {
+
+            padding: 10px 17px;
+
+            border: 2px solid #1f3864;
+
+            background: white;
+
+            color: #1f3864;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+
             font-weight: 600;
-        }
-        .badge-paid     { background: #d4edda; color: #155724; }
-        .badge-pending  { background: #fff3cd; color: #856404; }
-        .badge-partial  { background: #d1ecf1; color: #0c5460; }
-        .badge-rejected { background: #f8d7da; color: #721c24; }
 
-        /* ── Loading and error states ────────────────────── */
-        .loading { text-align: center; padding: 40px; color: #888; font-size: 16px; }
-        .error   { text-align: center; padding: 40px; color: #c0392b; font-size: 15px; }
+            transition: 0.2s;
+        }
+
+
+        .tab-btn:hover {
+
+            background: #e9edf5;
+        }
+
+
+        .tab-btn.active {
+
+            background: #1f3864;
+
+            color: white;
+        }
+
+
+        /* =====================================================
+           TAB CONTENT
+        ===================================================== */
+
+        .tab-content {
+
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 8px;
+
+            box-shadow:
+                0 1px 5px rgba(0, 0, 0, 0.08);
+
+            margin-bottom: 30px;
+        }
+
+
+        .tab-content h2 {
+
+            color: #1f3864;
+
+            margin-bottom: 8px;
+        }
+
+
+        .description {
+
+            color: #666;
+
+            margin-bottom: 20px;
+        }
+
+
+        /* =====================================================
+           SEARCH BOX
+        ===================================================== */
+
+        .search-box {
+
+            width: 100%;
+
+            max-width: 360px;
+
+            padding: 10px 14px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 5px;
+
+            margin-bottom: 15px;
+        }
+
+
+        /* =====================================================
+           TABLE
+        ===================================================== */
+
+        .table-wrap {
+
+            overflow-x: auto;
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+        }
+
+
+        th {
+
+            background: #1f3864;
+
+            color: white;
+
+            padding: 12px;
+
+            text-align: left;
+        }
+
+
+        td {
+
+            padding: 10px 12px;
+
+            border-bottom: 1px solid #eee;
+        }
+
+
+        tr:nth-child(even) td {
+
+            background: #fafafa;
+        }
+
+
+        /* =====================================================
+           BADGES
+        ===================================================== */
+
+        .badge {
+
+            padding: 4px 10px;
+
+            border-radius: 12px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+        }
+
+
+        .badge-paid {
+
+            background: #d4edda;
+            color: #155724;
+        }
+
+
+        .badge-pending {
+
+            background: #fff3cd;
+            color: #856404;
+        }
+
+
+        .badge-partial {
+
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+
+        .badge-rejected {
+
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+
+        /* =====================================================
+           CHARTS
+        ===================================================== */
+
+        .chart-box {
+
+            position: relative;
+
+            width: 100%;
+
+            height: 420px;
+        }
+
+
+        .blood-chart {
+
+            max-width: 650px;
+
+            margin: auto;
+        }
+
+
+        /* =====================================================
+           HEATMAP
+        ===================================================== */
+
+        .heatmap-wrapper {
+
+            overflow-x: auto;
+        }
+
+
+        .heatmap {
+
+            border-collapse: separate;
+
+            border-spacing: 4px;
+
+            min-width: 900px;
+        }
+
+
+        .heatmap th {
+
+            text-align: center;
+        }
+
+
+        .heatmap td {
+
+            text-align: center;
+
+            padding: 14px 8px;
+
+            border-radius: 5px;
+        }
+
+
+        .day-cell {
+
+            background: #edf0f5 !important;
+
+            color: #1f3864;
+
+            font-weight: bold;
+
+            min-width: 110px;
+        }
+
+
+        .heat-cell {
+
+            font-weight: bold;
+
+            transition: 0.2s;
+        }
+
+
+        .heat-cell:hover {
+
+            transform: scale(1.08);
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media(max-width:700px) {
+
+            .navbar {
+
+                padding: 15px;
+            }
+
+
+            .navbar span {
+
+                display: none;
+            }
+
+
+            .page {
+
+                padding: 20px 12px;
+            }
+
+
+            .tab-btn {
+
+                width: 100%;
+            }
+
+
+            .chart-box {
+
+                height: 320px;
+            }
+
+
+            .patient-search-box {
+
+                flex-direction: column;
+            }
+
+
+            .patient-search-box button {
+
+                width: 100%;
+            }
+
+        }
     </style>
+
 </head>
+
 
 <body>
 
-<!-- ───────────────────────────────────────────────────────────────────────
-     Navigation Bar
-     The {{ }} syntax is Vue. It means: display the value of this variable.
-──────────────────────────────────────────────────────────────────────────── -->
-<div class="navbar">
-    <h1>CareSync Hospital Dashboard</h1>
-    <span>Live Data  |  MySQL  |  FastAPI  |  Vue.js</span>
-</div>
 
-<!-- ───────────────────────────────────────────────────────────────────────
-     Main application div. id='app' is what Vue attaches to.
-──────────────────────────────────────────────────────────────────────────── -->
-<div id="app">
-    <div class="page">
+    <div id="app">
 
-        <!-- Loading state: shown while data is being fetched -->
-        <div v-if="loading" class="loading">Loading hospital data...</div>
 
-        <!-- Error state: shown if the API cannot be reached -->
-        <div v-else-if="error" class="error">
-            Cannot connect to the backend server.<br/>
-            Make sure uvicorn is running in your Command Prompt.<br/>
-            Command: uvicorn main:app --reload
+        <!-- =====================================================
+         NAVBAR
+    ===================================================== -->
+
+        <div class="navbar">
+
+            <h1>CareSync Hospital Dashboard</h1>
+
+            <span>
+                Live Data | MySQL | FastAPI | Vue.js
+            </span>
+
         </div>
 
-        <!-- Main content: shown when data has loaded successfully -->
-        <div v-else>
 
-            <!-- ── Summary Cards ────────────────────────────────────── -->
-            <p class="section-title">Hospital Summary</p>
-            <div class="cards">
-                <div class="card">
-                    <div class="label">Total Patients</div>
-                    <div class="value">{{ summary.total_patients }}</div>
-                </div>
-                <div class="card">
-                    <div class="label">Active Doctors</div>
-                    <div class="value">{{ summary.total_doctors }}</div>
-                </div>
-                <div class="card">
-                    <div class="label">Total Appointments</div>
-                    <div class="value">{{ summary.total_appointments }}</div>
-                </div>
-                <div class="card">
-                    <div class="label">Total Bills</div>
-                    <div class="value">{{ summary.total_bills }}</div>
-                </div>
-                <div class="card red">
-                    <div class="label">Rejection Rate</div>
-                    <div class="value">{{ summary.rejection_rate }}%</div>
-                </div>
-                <div class="card green">
-                    <div class="label">Revenue Collected</div>
-                    <div class="value">Rs {{ formatNumber(summary.total_revenue) }}</div>
-                </div>
+        <div class="page">
+
+
+            <!-- ================= LOADING ================= -->
+
+            <div v-if="loading" class="empty">
+
+                Loading hospital data...
+
             </div>
 
-            <!-- ── Tab Buttons ──────────────────────────────────────── -->
-            <div class="tabs">
-                <!--
-                    @click is Vue shorthand for onclick.
-                    :class is Vue shorthand for binding CSS classes dynamically.
-                    When activeTab equals 'patients', the tab-btn gets the 'active' class.
-                -->
-                <button class="tab-btn" :class="{ active: activeTab === 'patients' }"
-                        @click="activeTab = 'patients'">Patients</button>
-                <button class="tab-btn" :class="{ active: activeTab === 'billing' }"
-                        @click="activeTab = 'billing'">Billing</button>
-                <button class="tab-btn" :class="{ active: activeTab === 'doctors' }"
-                        @click="activeTab = 'doctors'">Doctors</button>
-            </div>
 
-            <!-- ── Patients Tab ─────────────────────────────────────── -->
-            <!--
-                v-if="activeTab === 'patients'" means:
-                only show this section when the Patients tab is active.
-            -->
-            <div v-if="activeTab === 'patients'">
-                <input
-                    class="search-box"
-                    v-model="patientSearch"
-                    placeholder="Search patient by name..."
-                />
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Full Name</th>
-                                <th>Gender</th>
-                                <th>Blood Group</th>
-                                <th>Date of Birth</th>
-                                <th>Registered On</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!--
-                                v-for loops through the filteredPatients array.
-                                :key is required by Vue to track each row efficiently.
-                            -->
-                            <tr v-for="p in filteredPatients" :key="p.patient_id">
-                                <td>{{ p.patient_id }}</td>
-                                <td>{{ p.full_name }}</td>
-                                <td>{{ p.gender }}</td>
-                                <td>{{ p.blood_group }}</td>
-                                <td>{{ p.date_of_birth }}</td>
-                                <td>{{ p.registered_on }}</td>
-                            </tr>
-                            <tr v-if="filteredPatients.length === 0">
-                                <td colspan="6" style="text-align:center; color:#888;">
-                                    No patients match your search.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div v-else>
+
+
+                <!-- =====================================================
+                 BACKEND STATUS
+            ===================================================== -->
+
+                <div class="status">
+
+                    <strong>Backend:</strong>
+                    FastAPI connected successfully
+
                 </div>
-            </div>
 
-            <!-- ── Billing Tab ──────────────────────────────────────── -->
-            <div v-if="activeTab === 'billing'">
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Bill ID</th>
-                                <th>Patient Name</th>
-                                <th>Total Amount</th>
-                                <th>Amount Paid</th>
-                                <th>Status</th>
-                                <th>Bill Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="b in bills" :key="b.bill_id">
-                                <td>{{ b.bill_id }}</td>
-                                <td>{{ b.patient_name }}</td>
-                                <td>Rs {{ b.total_amount.toFixed(2) }}</td>
-                                <td>Rs {{ b.amount_paid.toFixed(2) }}</td>
-                                <td>
-                                    <!--
-                                        badgeClass() is a method defined in the Vue app below.
-                                        It returns the correct CSS class based on the status value.
-                                    -->
-                                    <span class="badge" :class="badgeClass(b.status)">
-                                        {{ b.status }}
-                                    </span>
-                                </td>
-                                <td>{{ b.bill_date }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <!-- =====================================================
+                 PATIENT SEARCH
+            ===================================================== -->
+
+                <div class="patient-search-section">
+
+                    <h2 class="section-title">
+                        🔎 Search Patient
+                    </h2>
+
+
+                    <div class="patient-search-box">
+
+                        <input type="number" min="1" v-model="searchPatientId" placeholder="Enter Patient ID"
+                            @keyup.enter="searchPatient">
+
+
+                        <button type="button" @click="searchPatient" :disabled="patientSearchLoading">
+
+                            {{ patientSearchLoading ? 'Searching...' : 'Search' }}
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- PATIENT ERROR -->
+
+                    <div v-if="patientSearchError" class="patient-error">
+
+                        {{ patientSearchError }}
+
+                    </div>
+
+
+                    <!-- PATIENT DETAILS -->
+
+                    <div v-if="searchedPatient" class="patient-result">
+
+                        <h3>👤 Patient Details</h3>
+
+
+                        <div class="patient-details-grid">
+
+
+                            <div class="detail-card">
+
+                                <span>Patient ID</span>
+
+                                <strong>
+                                    {{ searchedPatient.patient_id }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-card">
+
+                                <span>Patient Name</span>
+
+                                <strong>
+                                    {{ searchedPatient.full_name }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-card">
+
+                                <span>Blood Group</span>
+
+                                <strong>
+                                    🩸 {{ searchedPatient.blood_group || 'Not available' }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-card">
+
+                                <span>Email</span>
+
+                                <strong>
+                                    {{ searchedPatient.email || 'Not available' }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-card">
+
+                                <span>Gender</span>
+
+                                <strong>
+                                    {{ searchedPatient.gender || 'Not available' }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="detail-card">
+
+                                <span>Date of Birth</span>
+
+                                <strong>
+                                    {{ searchedPatient.date_of_birth || 'Not available' }}
+                                </strong>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
                 </div>
-            </div>
 
-            <!-- ── Doctors Tab ──────────────────────────────────────── -->
-            <div v-if="activeTab === 'doctors'">
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Full Name</th>
-                                <th>Specialisation</th>
-                                <th>Completed Appointments</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="d in doctors" :key="d.doctor_id">
-                                <td>{{ d.doctor_id }}</td>
-                                <td>{{ d.full_name }}</td>
-                                <td>{{ d.specialisation }}</td>
-                                <td>{{ d.total_appointments }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <!-- =====================================================
+                 HOSPITAL SUMMARY
+            ===================================================== -->
+
+                <p class="section-title">
+                    Hospital Summary
+                </p>
+
+
+                <div class="cards">
+
+
+                    <div class="card">
+
+                        <div class="label">
+                            Total Patients
+                        </div>
+
+                        <div class="value">
+                            {{ summary.total_patients || 0 }}
+                        </div>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <div class="label">
+                            Active Doctors
+                        </div>
+
+                        <div class="value">
+                            {{ summary.total_doctors || 0 }}
+                        </div>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <div class="label">
+                            Total Appointments
+                        </div>
+
+                        <div class="value">
+                            {{ summary.total_appointments || 0 }}
+                        </div>
+
+                    </div>
+
+
+                    <div class="card">
+
+                        <div class="label">
+                            Total Bills
+                        </div>
+
+                        <div class="value">
+                            {{ summary.total_bills || 0 }}
+                        </div>
+
+                    </div>
+
+
+                    <div class="card red">
+
+                        <div class="label">
+                            Rejection Rate
+                        </div>
+
+                        <div class="value">
+                            {{ summary.rejection_rate || 0 }}%
+                        </div>
+
+                    </div>
+
+
+                    <div class="card green">
+
+                        <div class="label">
+                            Revenue Collected
+                        </div>
+
+                        <div class="value">
+                            Rs {{ formatNumber(summary.total_revenue) }}
+                        </div>
+
+                    </div>
+
+
                 </div>
+
+
+                <!-- =====================================================
+                 TABS
+            ===================================================== -->
+
+                <div class="tabs">
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'patients'}" @click="openTab('patients')">
+                        Patients
+                    </button>
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'doctors'}" @click="openTab('doctors')">
+                        Doctors
+                    </button>
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'doctorSummary'}"
+                        @click="openTab('doctorSummary')">
+                        Doctor Summary
+                    </button>
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'billing'}" @click="openTab('billing')">
+                        Billing
+                    </button>
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'revenue'}" @click="openTab('revenue')">
+                        Revenue Trend
+                    </button>
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'heatmap'}" @click="openTab('heatmap')">
+                        Appointment Heatmap
+                    </button>
+
+
+                    <button class="tab-btn" :class="{active: activeTab === 'blood'}" @click="openTab('blood')">
+                        Blood Group Distribution
+                    </button>
+
+
+                </div>
+
+
+                <!-- =====================================================
+                 PATIENTS TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'patients'" class="tab-content">
+
+                    <h2>Patients</h2>
+
+                    <br>
+
+
+                    <input class="search-box" v-model="patientSearch" placeholder="Search patient by name...">
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>ID</th>
+                                    <th>Full Name</th>
+                                    <th>Gender</th>
+                                    <th>Blood Group</th>
+                                    <th>Date of Birth</th>
+                                    <th>Registered On</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+
+                                <tr v-for="p in filteredPatients" :key="p.patient_id">
+
+                                    <td>{{ p.patient_id }}</td>
+
+                                    <td>{{ p.full_name }}</td>
+
+                                    <td>{{ p.gender }}</td>
+
+                                    <td>{{ p.blood_group }}</td>
+
+                                    <td>{{ p.date_of_birth }}</td>
+
+                                    <td>{{ p.registered_on }}</td>
+
+                                </tr>
+
+
+                                <tr v-if="filteredPatients.length === 0">
+
+                                    <td colspan="6" class="empty">
+                                        No patients found.
+                                    </td>
+
+                                </tr>
+
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 DOCTORS TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'doctors'" class="tab-content">
+
+                    <h2>Doctors</h2>
+
+                    <br>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>ID</th>
+
+                                    <th>Full Name</th>
+
+                                    <th>Specialisation</th>
+
+                                    <th>Completed Appointments</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+
+                                <tr v-for="d in doctors" :key="d.doctor_id">
+
+                                    <td>
+                                        {{ d.doctor_id }}
+                                    </td>
+
+                                    <td>
+                                        {{ d.full_name }}
+                                    </td>
+
+                                    <td>
+                                        {{ d.specialisation }}
+                                    </td>
+
+                                    <td>
+                                        {{ d.total_appointments }}
+                                    </td>
+
+                                </tr>
+
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 DOCTOR SUMMARY TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'doctorSummary'" class="tab-content">
+
+                    <h2>Doctor Summary</h2>
+
+
+                    <p class="description">
+
+                        Total appointments handled by each doctor.
+
+                    </p>
+
+
+                    <div v-if="doctorAnalyticsError" class="error">
+
+                        {{ doctorAnalyticsError }}
+
+                    </div>
+
+
+                    <div v-else-if="doctorAnalytics.length === 0" class="empty">
+
+                        No doctor appointment data available.
+
+                    </div>
+
+
+                    <div v-else class="chart-box">
+
+                        <canvas ref="doctorChartCanvas"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 BILLING TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'billing'" class="tab-content">
+
+                    <h2>Billing</h2>
+
+                    <br>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>Bill ID</th>
+
+                                    <th>Patient Name</th>
+
+                                    <th>Total Amount</th>
+
+                                    <th>Amount Paid</th>
+
+                                    <th>Status</th>
+
+                                    <th>Bill Date</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+
+                                <tr v-for="b in bills" :key="b.bill_id">
+
+                                    <td>
+                                        {{ b.bill_id }}
+                                    </td>
+
+
+                                    <td>
+                                        {{ b.patient_name }}
+                                    </td>
+
+
+                                    <td>
+
+                                        Rs {{
+                                        Number(b.total_amount || 0).toFixed(2)
+                                        }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        Rs {{
+                                        Number(b.amount_paid || 0).toFixed(2)
+                                        }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <span class="badge" :class="badgeClass(b.status)">
+
+                                            {{ b.status }}
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ b.bill_date }}
+                                    </td>
+
+                                </tr>
+
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 REVENUE TREND TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'revenue'" class="tab-content">
+
+                    <h2>Revenue Trend</h2>
+
+
+                    <p class="description">
+
+                        Monthly billed amount compared with
+                        the amount collected.
+
+                    </p>
+
+
+                    <div v-if="revenueError" class="error">
+
+                        {{ revenueError }}
+
+                    </div>
+
+
+                    <div v-else-if="revenueData.length === 0" class="empty">
+
+                        No revenue data available.
+
+                    </div>
+
+
+                    <div v-else class="chart-box">
+
+                        <canvas ref="revenueCanvas"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 APPOINTMENT HEATMAP TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'heatmap'" class="tab-content">
+
+                    <h2>Appointment Heatmap</h2>
+
+
+                    <p class="description">
+
+                        Number of appointments by day
+                        and appointment hour.
+
+                    </p>
+
+
+                    <div v-if="heatmapError" class="error">
+
+                        {{ heatmapError }}
+
+                    </div>
+
+
+                    <div v-else-if="heatmapData.length === 0" class="empty">
+
+                        No appointment data available.
+
+                    </div>
+
+
+                    <div v-else class="heatmap-wrapper">
+
+                        <table class="heatmap">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>Day</th>
+
+
+                                    <th v-for="hour in heatmapHours" :key="hour">
+
+                                        {{ formatHour(hour) }}
+
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+
+                                <tr v-for="day in weekDays" :key="day">
+
+                                    <td class="day-cell">
+
+                                        {{ day }}
+
+                                    </td>
+
+
+                                    <td v-for="hour in heatmapHours" :key="hour" class="heat-cell"
+                                        :style="heatStyle(getHeatValue(day, hour))">
+
+                                        {{ getHeatValue(day, hour) }}
+
+                                    </td>
+
+                                </tr>
+
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================================
+                 BLOOD GROUP DISTRIBUTION TAB
+            ===================================================== -->
+
+                <div v-if="activeTab === 'blood'" class="tab-content">
+
+                    <h2>Blood Group Distribution</h2>
+
+
+                    <p class="description">
+
+                        Distribution of blood groups among active patients.
+
+                    </p>
+
+
+                    <div v-if="bloodError" class="error">
+
+                        {{ bloodError }}
+
+                    </div>
+
+
+                    <div v-else-if="bloodData.length === 0" class="empty">
+
+                        No blood group data available.
+
+                    </div>
+
+
+                    <div v-else class="chart-box blood-chart">
+
+                        <canvas ref="bloodCanvas"></canvas>
+
+                    </div>
+
+                </div>
+
+
             </div>
 
-        </div> <!-- end v-else -->
-    </div> <!-- end page -->
-</div> <!-- end #app -->
+        </div>
 
-<script>
-    // Vue.createApp defines the entire frontend application.
-    // data() holds all the variables the page uses.
-    // methods holds all the functions the page uses.
-    // mounted() runs automatically when the page first loads.
+    </div>
 
-    const { createApp } = Vue;
 
-    createApp({
-        data() {
-            return {
-                // State flags
-                loading:  true,   // true while waiting for API response
-                error:    false,  // true if API call fails
+    <!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
 
-                // Which tab is currently visible
-                activeTab: 'patients',
+    <script>
 
-                // Search box value for patient filter
-                patientSearch: '',
+        const {
+            createApp,
+            nextTick
+        } = Vue;
 
-                // Data from the API
-                summary:  {},
-                patients: [],
-                bills:    [],
-                doctors:  [],
-            };
-        },
 
-        computed: {
-            // computed properties recalculate automatically
-            // whenever their dependencies change.
-            // filteredPatients updates every time patientSearch changes.
-            filteredPatients() {
-                const term = this.patientSearch.toLowerCase();
-                if (!term) return this.patients;
-                return this.patients.filter(p =>
-                    p.full_name.toLowerCase().includes(term)
-                );
-            },
-        },
+        createApp({
 
-        methods: {
-            // Returns the correct CSS badge class for a billing status
-            badgeClass(status) {
-                const map = {
-                    'Paid':          'badge-paid',
-                    'Pending':       'badge-pending',
-                    'Partially Paid':'badge-partial',
-                    'Rejected':      'badge-rejected',
+
+            /* =====================================================
+               DATA
+            ===================================================== */
+
+            data() {
+
+                return {
+
+                    API_BASE: 'http://127.0.0.1:8000',
+
+
+                    loading: true,
+
+
+                    activeTab: 'patients',
+
+
+                    /* ================= PATIENT SEARCH ================= */
+
+                    patientSearch: '',
+
+                    searchPatientId: '',
+
+                    searchedPatient: null,
+
+                    patientSearchError: '',
+
+                    patientSearchLoading: false,
+
+
+                    /* ================= BASIC DATA ================= */
+
+                    summary: {},
+
+                    patients: [],
+
+                    bills: [],
+
+                    doctors: [],
+
+
+                    /* ================= CHART DATA ================= */
+
+                    revenueData: [],
+
+                    heatmapData: [],
+
+                    bloodData: [],
+
+                    doctorAnalytics: [],
+
+
+                    /* ================= ERRORS ================= */
+
+                    revenueError: '',
+
+                    heatmapError: '',
+
+                    bloodError: '',
+
+                    doctorAnalyticsError: '',
+
+
+                    /* ================= CHART INSTANCES ================= */
+
+                    revenueChart: null,
+
+                    bloodChart: null,
+
+                    doctorChart: null,
+
+
+                    /* ================= HEATMAP ================= */
+
+                    weekDays: [
+
+                        'Monday',
+                        'Tuesday',
+                        'Wednesday',
+                        'Thursday',
+                        'Friday',
+                        'Saturday',
+                        'Sunday'
+
+                    ],
+
+
+                    heatmapHours: [
+
+                        8, 9, 10, 11, 12,
+                        13, 14, 15, 16, 17, 18
+
+                    ]
+
                 };
-                return map[status] || '';
+
             },
 
-            // Formats large numbers with commas: 1234567 becomes 1,234,567
-            formatNumber(n) {
-                return Number(n).toLocaleString('en-IN');
-            },
 
-            // Fetches all data from the FastAPI backend
-            async fetchAll() {
-                try {
-                    // The base URL where FastAPI is running
-                    const base = 'http://127.0.0.1:8000';
+            /* =====================================================
+               COMPUTED
+            ===================================================== */
 
-                    // fetch() is a built-in browser function that calls an API.
-                    // Promise.all runs all four requests at the same time
-                    // instead of one after the other, making the page load faster.
-                    const [s, p, b, d] = await Promise.all([
-                        fetch(`${base}/summary`).then(r => r.json()),
-                        fetch(`${base}/patients`).then(r => r.json()),
-                        fetch(`${base}/billing`).then(r => r.json()),
-                        fetch(`${base}/doctors`).then(r => r.json()),
-                    ]);
+            computed: {
 
-                    // Store the returned data in our variables
-                    this.summary  = s;
-                    this.patients = p.patients;
-                    this.bills    = b.bills;
-                    this.doctors  = d.doctors;
-                    this.loading  = false;
 
-                } catch (err) {
-                    // If any request fails, show the error state
-                    console.error('API error:', err);
-                    this.loading = false;
-                    this.error   = true;
+                filteredPatients() {
+
+                    const term =
+                        this.patientSearch
+                            .toLowerCase()
+                            .trim();
+
+
+                    if (!term) {
+
+                        return this.patients;
+
+                    }
+
+
+                    return this.patients.filter(
+
+                        patient =>
+
+                            String(patient.full_name || '')
+                                .toLowerCase()
+                                .includes(term)
+
+                    );
+
                 }
+
             },
-        },
 
-        // mounted() runs automatically as soon as the page finishes loading.
-        // This is where we trigger the first data fetch.
-        mounted() {
-            this.fetchAll();
-        },
 
-    }).mount('#app');  // Attach Vue to the div with id='app'
-</script>
+            /* =====================================================
+               METHODS
+            ===================================================== */
+
+            methods: {
+
+
+                /* =====================================================
+                   SEARCH PATIENT BY ID
+                ===================================================== */
+
+                async searchPatient() {
+
+
+                    this.searchedPatient = null;
+
+                    this.patientSearchError = '';
+
+
+                    if (
+
+                        !this.searchPatientId ||
+
+                        Number(this.searchPatientId) <= 0
+
+                    ) {
+
+                        this.patientSearchError =
+                            'Please enter a valid Patient ID.';
+
+                        return;
+
+                    }
+
+
+                    this.patientSearchLoading = true;
+
+
+                    try {
+
+
+                        const patientId =
+                            Number(this.searchPatientId);
+
+
+                        const response =
+                            await fetch(
+
+                                `${this.API_BASE}/patients/${patientId}`
+
+                            );
+
+
+                        if (response.status === 404) {
+
+                            this.patientSearchError =
+                                'Patient not found';
+
+                            return;
+
+                        }
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                `HTTP ${response.status}`
+                            );
+
+                        }
+
+
+                        const data =
+                            await response.json();
+
+
+                        /*
+                           Supports both:
+        
+                           { "patient": {...} }
+        
+                           OR directly:
+        
+                           { patient_id: 1, ... }
+                        */
+
+                        this.searchedPatient =
+                            data.patient || data;
+
+
+                    }
+
+                    catch (error) {
+
+
+                        console.error(
+                            'Patient search error:',
+                            error
+                        );
+
+
+                        this.patientSearchError =
+                            'Unable to connect to the FastAPI server.';
+
+
+                    }
+
+                    finally {
+
+
+                        this.patientSearchLoading = false;
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   FORMAT NUMBER
+                ===================================================== */
+
+                formatNumber(value) {
+
+                    return Number(value || 0)
+                        .toLocaleString('en-IN');
+
+                },
+
+
+                /* =====================================================
+                   BILL STATUS
+                ===================================================== */
+
+                badgeClass(status) {
+
+                    const map = {
+
+                        'Paid': 'badge-paid',
+
+                        'Pending': 'badge-pending',
+
+                        'Partially Paid': 'badge-partial',
+
+                        'Rejected': 'badge-rejected'
+
+                    };
+
+
+                    return map[status] || '';
+
+                },
+
+
+                /* =====================================================
+                   API HELPER
+                ===================================================== */
+
+                async getJSON(url) {
+
+
+                    const response =
+                        await fetch(url);
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            `HTTP ${response.status}`
+                        );
+
+                    }
+
+
+                    return await response.json();
+
+                },
+
+
+                /* =====================================================
+                   LOAD BASIC DATA
+                ===================================================== */
+
+                async fetchBasicData() {
+
+                    try {
+
+
+                        const [
+
+                            summary,
+
+                            patients,
+
+                            billing,
+
+                            doctors
+
+                        ] = await Promise.all([
+
+
+                            this.getJSON(
+                                `${this.API_BASE}/summary`
+                            ),
+
+
+                            this.getJSON(
+                                `${this.API_BASE}/patients`
+                            ),
+
+
+                            this.getJSON(
+                                `${this.API_BASE}/billing`
+                            ),
+
+
+                            this.getJSON(
+                                `${this.API_BASE}/doctors`
+                            )
+
+                        ]);
+
+
+                        this.summary =
+                            summary || {};
+
+
+                        this.patients =
+                            patients.patients || patients || [];
+
+
+                        this.bills =
+                            billing.bills || billing || [];
+
+
+                        this.doctors =
+                            doctors.doctors || doctors || [];
+
+
+                    }
+
+                    catch (error) {
+
+
+                        console.error(
+                            'Basic API error:',
+                            error
+                        );
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   LOAD REVENUE
+                ===================================================== */
+
+                async loadRevenue() {
+
+                    try {
+
+
+                        const data =
+                            await this.getJSON(
+
+                                `${this.API_BASE}/revenue-trend`
+
+                            );
+
+
+                        this.revenueData =
+                            data.revenue_trend || data || [];
+
+
+                    }
+
+                    catch (error) {
+
+
+                        console.error(
+                            'Revenue error:',
+                            error
+                        );
+
+
+                        this.revenueError =
+                            'Revenue Trend API is not available.';
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   LOAD HEATMAP
+                ===================================================== */
+
+                async loadHeatmap() {
+
+                    try {
+
+
+                        const data =
+                            await this.getJSON(
+
+                                `${this.API_BASE}/appointment-heatmap`
+
+                            );
+
+
+                        this.heatmapData =
+                            data.appointment_heatmap || data || [];
+
+
+                    }
+
+                    catch (error) {
+
+
+                        console.error(
+                            'Heatmap error:',
+                            error
+                        );
+
+
+                        this.heatmapError =
+                            'Appointment Heatmap API is not available.';
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   LOAD BLOOD GROUP DATA
+                ===================================================== */
+
+                async loadBloodGroups() {
+
+                    try {
+
+
+                        const data =
+                            await this.getJSON(
+
+                                `${this.API_BASE}/blood-group-distribution`
+
+                            );
+
+
+                        this.bloodData =
+                            data.blood_group_distribution || data || [];
+
+
+                    }
+
+                    catch (error) {
+
+
+                        console.error(
+                            'Blood group error:',
+                            error
+                        );
+
+
+                        this.bloodError =
+                            'Blood Group API is not available.';
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   LOAD DOCTOR ANALYTICS
+                ===================================================== */
+
+                async loadDoctorAnalytics() {
+
+                    try {
+
+
+                        this.doctorAnalyticsError = '';
+
+
+                        const data =
+                            await this.getJSON(
+
+                                `${this.API_BASE}/analytics/doctors`
+
+                            );
+
+
+                        /*
+                           Supports:
+        
+                           [ {...}, {...} ]
+        
+                           OR:
+        
+                           { "doctors": [...] }
+        
+                           OR:
+        
+                           { "doctor_analytics": [...] }
+                        */
+
+                        this.doctorAnalytics =
+                            data.doctors ||
+                            data.doctor_analytics ||
+                            data ||
+                            [];
+
+
+                    }
+
+                    catch (error) {
+
+
+                        console.error(
+                            'Doctor analytics error:',
+                            error
+                        );
+
+
+                        this.doctorAnalyticsError =
+                            'Doctor Analytics API is not available.';
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   OPEN TAB
+                ===================================================== */
+
+                async openTab(tab) {
+
+
+                    this.activeTab = tab;
+
+
+                    await nextTick();
+
+
+                    /* ================= REVENUE ================= */
+
+                    if (tab === 'revenue') {
+
+                        this.createRevenueChart();
+
+                    }
+
+
+                    /* ================= BLOOD ================= */
+
+                    if (tab === 'blood') {
+
+                        this.createBloodChart();
+
+                    }
+
+
+                    /* ================= DOCTOR SUMMARY ================= */
+
+                    if (tab === 'doctorSummary') {
+
+
+                        await this.loadDoctorAnalytics();
+
+
+                        await nextTick();
+
+
+                        this.createDoctorChart();
+
+                    }
+
+                },
+
+
+                /* =====================================================
+                   REVENUE CHART
+                ===================================================== */
+
+                createRevenueChart() {
+
+
+                    const canvas =
+                        this.$refs.revenueCanvas;
+
+
+                    if (
+
+                        !canvas ||
+
+                        this.revenueData.length === 0
+
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (this.revenueChart) {
+
+                        this.revenueChart.destroy();
+
+                    }
+
+
+                    this.revenueChart =
+                        new Chart(
+
+                            canvas,
+
+                            {
+
+                                type: 'line',
+
+
+                                data: {
+
+
+                                    labels:
+
+                                        this.revenueData.map(
+
+                                            item => item.month
+
+                                        ),
+
+
+                                    datasets: [
+
+
+                                        {
+
+                                            label:
+                                                'Amount Billed',
+
+
+                                            data:
+
+                                                this.revenueData.map(
+
+                                                    item =>
+
+                                                        Number(
+                                                            item.billed || 0
+                                                        )
+
+                                                ),
+
+
+                                            borderWidth: 3,
+
+                                            tension: 0.3,
+
+                                            fill: false
+
+                                        },
+
+
+                                        {
+
+                                            label:
+                                                'Amount Collected',
+
+
+                                            data:
+
+                                                this.revenueData.map(
+
+                                                    item =>
+
+                                                        Number(
+                                                            item.collected || 0
+                                                        )
+
+                                                ),
+
+
+                                            borderWidth: 3,
+
+                                            tension: 0.3,
+
+                                            fill: false
+
+                                        }
+
+                                    ]
+
+                                },
+
+
+                                options: {
+
+                                    responsive: true,
+
+                                    maintainAspectRatio: false,
+
+
+                                    plugins: {
+
+                                        legend: {
+
+                                            position: 'top'
+
+                                        }
+
+                                    },
+
+
+                                    scales: {
+
+
+                                        y: {
+
+                                            beginAtZero: true,
+
+
+                                            ticks: {
+
+                                                callback:
+                                                    function (value) {
+
+                                                        return (
+                                                            'Rs ' +
+                                                            Number(value)
+                                                                .toLocaleString('en-IN')
+                                                        );
+
+                                                    }
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        );
+
+                },
+
+
+                /* =====================================================
+                   BLOOD GROUP CHART
+                ===================================================== */
+
+                createBloodChart() {
+
+
+                    const canvas =
+                        this.$refs.bloodCanvas;
+
+
+                    if (
+
+                        !canvas ||
+
+                        this.bloodData.length === 0
+
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (this.bloodChart) {
+
+                        this.bloodChart.destroy();
+
+                    }
+
+
+                    this.bloodChart =
+                        new Chart(
+
+                            canvas,
+
+                            {
+
+                                type: 'doughnut',
+
+
+                                data: {
+
+
+                                    labels:
+
+                                        this.bloodData.map(
+
+                                            item =>
+                                                item.blood_group
+
+                                        ),
+
+
+                                    datasets: [
+
+                                        {
+
+                                            label: 'Patients',
+
+
+                                            data:
+
+                                                this.bloodData.map(
+
+                                                    item =>
+
+                                                        Number(
+                                                            item.total_patients || 0
+                                                        )
+
+                                                ),
+
+
+                                            borderWidth: 2
+
+                                        }
+
+                                    ]
+
+                                },
+
+
+                                plugins: [
+
+                                    ChartDataLabels
+
+                                ],
+
+
+                                options: {
+
+
+                                    responsive: true,
+
+
+                                    maintainAspectRatio: false,
+
+
+                                    plugins: {
+
+
+                                        legend: {
+
+                                            position: 'bottom'
+
+                                        },
+
+
+                                        tooltip: {
+
+                                            callbacks: {
+
+                                                label:
+
+                                                    function (context) {
+
+                                                        return (
+
+                                                            context.label +
+
+                                                            ': ' +
+
+                                                            context.raw +
+
+                                                            ' Patients'
+
+                                                        );
+
+                                                    }
+
+                                            }
+
+                                        },
+
+
+                                        /* =========================
+                                           TEXT INSIDE CHART
+                                        ========================= */
+
+                                        datalabels: {
+
+
+                                            display: true,
+
+
+                                            color: '#ffffff',
+
+
+                                            font: {
+
+                                                weight: 'bold',
+
+                                                size: 13
+
+                                            },
+
+
+                                            anchor: 'center',
+
+
+                                            align: 'center',
+
+
+                                            textAlign: 'center',
+
+
+                                            formatter:
+
+                                                function (value, context) {
+
+
+                                                    const label =
+
+                                                        context.chart.data.labels[
+                                                        context.dataIndex
+                                                        ];
+
+
+                                                    /*
+                                                       Displays:
+        
+                                                       A+
+                                                       B+
+                                                       AB+
+                                                       O+
+                                                    */
+
+                                                    return label;
+
+                                                }
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        );
+
+                },
+
+
+                /* =====================================================
+                   DOCTOR SUMMARY BAR CHART
+                ===================================================== */
+
+                createDoctorChart() {
+
+
+                    const canvas =
+                        this.$refs.doctorChartCanvas;
+
+
+                    if (
+
+                        !canvas ||
+
+                        this.doctorAnalytics.length === 0
+
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (this.doctorChart) {
+
+                        this.doctorChart.destroy();
+
+                    }
+
+
+                    this.doctorChart =
+                        new Chart(
+
+                            canvas,
+
+                            {
+
+                                type: 'bar',
+
+
+                                data: {
+
+
+                                    labels:
+
+                                        this.doctorAnalytics.map(
+
+                                            item =>
+
+                                                item.doctor_name ||
+                                                item.full_name ||
+                                                'Unknown Doctor'
+
+                                        ),
+
+
+                                    datasets: [
+
+                                        {
+
+                                            label:
+                                                'Total Appointments',
+
+
+                                            data:
+
+                                                this.doctorAnalytics.map(
+
+                                                    item =>
+
+                                                        Number(
+
+                                                            item.appointment_count ||
+
+                                                            item.total_appointments ||
+
+                                                            0
+
+                                                        )
+
+                                                ),
+
+
+                                            borderWidth: 1,
+
+                                            borderRadius: 6
+
+                                        }
+
+                                    ]
+
+                                },
+
+
+                                options: {
+
+
+                                    responsive: true,
+
+
+                                    maintainAspectRatio: false,
+
+
+                                    plugins: {
+
+
+                                        title: {
+
+                                            display: true,
+
+                                            text:
+                                                'Appointments Per Doctor',
+
+
+                                            font: {
+
+                                                size: 18
+
+                                            }
+
+                                        },
+
+
+                                        legend: {
+
+                                            display: false
+
+                                        }
+
+                                    },
+
+
+                                    scales: {
+
+
+                                        x: {
+
+                                            title: {
+
+                                                display: true,
+
+                                                text:
+                                                    'Doctor Names'
+
+                                            }
+
+                                        },
+
+
+                                        y: {
+
+                                            beginAtZero: true,
+
+
+                                            title: {
+
+                                                display: true,
+
+                                                text:
+                                                    'Total Appointment Count'
+
+                                            },
+
+
+                                            ticks: {
+
+                                                precision: 0
+
+                                            }
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        );
+
+                },
+
+
+                /* =====================================================
+                   HEATMAP VALUE
+                ===================================================== */
+
+                getHeatValue(day, hour) {
+
+
+                    const item =
+                        this.heatmapData.find(
+
+                            row =>
+
+                                String(row.day)
+                                    .toLowerCase()
+
+                                ===
+
+                                day.toLowerCase()
+
+                                &&
+
+                                Number(row.hour)
+
+                                ===
+
+                                Number(hour)
+
+                        );
+
+
+                    return item
+
+                        ?
+
+                        Number(
+                            item.total_appointments || 0
+                        )
+
+                        :
+
+                        0;
+
+                },
+
+
+                /* =====================================================
+                   HEATMAP STYLE
+                ===================================================== */
+
+                heatStyle(value) {
+
+
+                    const values =
+                        this.heatmapData.map(
+
+                            item =>
+
+                                Number(
+                                    item.total_appointments || 0
+                                )
+
+                        );
+
+
+                    const max =
+                        Math.max(
+                            ...values,
+                            1
+                        );
+
+
+                    const intensity =
+                        Number(value) / max;
+
+
+                    return {
+
+
+                        backgroundColor:
+
+                            `rgba(31, 56, 100, ${0.08 + intensity * 0.82})`,
+
+
+                        color:
+
+                            intensity > 0.45
+
+                                ?
+
+                                'white'
+
+                                :
+
+                                '#1f3864'
+
+                    };
+
+                },
+
+
+                /* =====================================================
+                   FORMAT HOUR
+                ===================================================== */
+
+                formatHour(hour) {
+
+
+                    if (hour === 12) {
+
+                        return '12 PM';
+
+                    }
+
+
+                    if (hour > 12) {
+
+                        return `${hour - 12} PM`;
+
+                    }
+
+
+                    return `${hour} AM`;
+
+                }
+
+            },
+
+
+            /* =====================================================
+               PAGE LOAD
+            ===================================================== */
+
+            async mounted() {
+
+
+                await this.fetchBasicData();
+
+
+                await Promise.all([
+
+                    this.loadRevenue(),
+
+                    this.loadHeatmap(),
+
+                    this.loadBloodGroups()
+
+                ]);
+
+
+                this.loading = false;
+
+            }
+
+        }).mount('#app');
+
+    </script>
+
 
 </body>
-</html>
 
+</html>

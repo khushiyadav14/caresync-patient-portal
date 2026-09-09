@@ -7,10 +7,11 @@
 #
 # To run this file:
 #   uvicorn main:app --reload
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi import FastAPI                        # the web framework
-from fastapi.middleware.cors import CORSMiddleware # allows browser to call this API
-import mysql.connector                             # connects to MySQL
+import mysql.connector
+from mysql.connector import Error                            # connects to MySQL
 
 # ── Create the FastAPI application ──────────────────────────────────────────
 app = FastAPI(title='CareSync Dashboard API')
@@ -284,22 +285,15 @@ def get_blood_group_distribution():
 
     return {'blood_group_distribution': rows}
 
-
-    # ── ENDPOINT 8: Get Single Patient ───────────────────────────────────────────
-# URL: http://127.0.0.1:8000/patients/{patient_id}
-# Example: http://127.0.0.1:8000/patients/1
-# Returns: detailed information for one active patient
-
-from fastapi import HTTPException
-
-
 @app.get('/patients/{patient_id}')
 def get_patient_by_id(patient_id: int):
+
     db = None
     cursor = None
 
     try:
         db = get_db()
+
         cursor = db.cursor(dictionary=True)
 
         cursor.execute(
@@ -320,15 +314,15 @@ def get_patient_by_id(patient_id: int):
 
         patient = cursor.fetchone()
 
-        # If no patient exists with this ID
+        # Patient does not exist
         if patient is None:
             raise HTTPException(
                 status_code=404,
-                detail=f'Patient with ID {patient_id} not found'
+                detail="Patient not found"
             )
 
         return {
-            'patient': patient
+            "patient": patient
         }
 
     except HTTPException:
@@ -337,12 +331,131 @@ def get_patient_by_id(patient_id: int):
     except mysql.connector.Error as e:
         raise HTTPException(
             status_code=500,
-            detail=f'Database error: {str(e)}'
+            detail=f"Database error: {str(e)}"
         )
 
     finally:
+
         if cursor:
             cursor.close()
 
         if db and db.is_connected():
             db.close()
+
+
+            # ── ENDPOINT: Get Appointments by Patient ID ────────────────────────────────
+# URL: http://127.0.0.1:8000/patients/{patient_id}/appointments
+# Returns: All appointments linked to a specific patient
+
+@app.get('/patients/{patient_id}/appointments')
+def get_patient_appointments(patient_id: int):
+
+    db = None
+    cursor = None
+
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+
+        # JOIN appointment table with patient table using patient_id
+        cursor.execute(
+            '''
+            SELECT
+                a.appointment_id,
+                p.patient_id,
+                p.full_name AS patient_name,
+                a.doctor_id,
+                DATE_FORMAT(
+                    a.appointment_date,
+                    '%d %b %Y'
+                ) AS appointment_date,
+                TIME_FORMAT(
+                    a.appointment_time,
+                    '%h:%i %p'
+                ) AS appointment_time,
+                a.status
+
+            FROM appointment a
+
+            JOIN patient p
+                ON a.patient_id = p.patient_id
+
+            WHERE p.patient_id = %s
+
+            ORDER BY
+                a.appointment_date DESC,
+                a.appointment_time DESC
+            ''',
+            (patient_id,)
+        )
+
+        appointments = cursor.fetchall()
+
+        # If the patient has no appointments,
+        # return an empty list []
+        return {
+            "appointments": appointments
+        }
+
+    except mysql.connector.Error as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error: {str(e)}"
+        )
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if db and db.is_connected():
+            db.close()
+
+
+# ============================================================
+# DOCTOR ANALYTICS
+# ============================================================
+
+@app.get("/analytics/doctors")
+def get_doctor_analytics():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        connection = get_db()
+
+        cursor = connection.cursor(dictionary=True)
+
+        query = """
+            SELECT
+                doctor_name,
+                total_appointments AS appointment_count
+            FROM vw_doctor_appointment_summary
+            ORDER BY total_appointments DESC
+        """
+
+        cursor.execute(query)
+
+        results = cursor.fetchall()
+
+        return results
+
+    except mysql.connector.Error as e:
+
+        print("Database Error:", e)
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error: {str(e)}"
+        )
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
