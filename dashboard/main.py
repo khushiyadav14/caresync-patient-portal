@@ -7,11 +7,10 @@
 #
 # To run this file:
 #   uvicorn main:app --reload
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 
-import mysql.connector
-from mysql.connector import Error                            # connects to MySQL
+from fastapi import FastAPI, HTTPException                      # the web framework
+from fastapi.middleware.cors import CORSMiddleware # allows browser to call this API
+import mysql.connector                             # connects to MySQL
 
 # ── Create the FastAPI application ──────────────────────────────────────────
 app = FastAPI(title='CareSync Dashboard API')
@@ -33,7 +32,7 @@ app.add_middleware(
 # We do not reuse a single connection because MySQL closes idle connections.
 def get_db():
     return mysql.connector.connect(
-        host="127.0.0.1",
+        host="localhost",
         port=3307,
         user="root",
         password="admin",
@@ -285,177 +284,146 @@ def get_blood_group_distribution():
 
     return {'blood_group_distribution': rows}
 
+# ── ENDPOINT 8: Patient Details by ID ────────────────────────────────────────
+# URL: http://127.0.0.1:8000/patients/{patient_id}
+# Returns: Complete details of one active patient
+
 @app.get('/patients/{patient_id}')
 def get_patient_by_id(patient_id: int):
 
-    db = None
-    cursor = None
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
 
-    try:
-        db = get_db()
+    cursor.execute(
+        '''
+        SELECT
+            patient_id,
+            full_name,
+            DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
+            gender,
+            phone,
+            email,
+            address,
+            blood_group,
+            emergency_contact_name,
+            emergency_contact_phone,
+            DATE_FORMAT(created_at, '%d %b %Y') AS registered_on,
+            DATE_FORMAT(updated_at, '%d %b %Y') AS updated_on
+        FROM patient
+        WHERE patient_id = %s
+          AND is_deleted = 0
+        ''',
+        (patient_id,)
+    )
 
-        cursor = db.cursor(dictionary=True)
+    patient = cursor.fetchone()
 
-        cursor.execute(
-            '''
-            SELECT
-                patient_id,
-                full_name,
-                gender,
-                blood_group,
-                DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
-                DATE_FORMAT(created_at, '%d %b %Y %h:%i %p') AS registered_on
-            FROM patient
-            WHERE patient_id = %s
-              AND is_deleted = 0
-            ''',
-            (patient_id,)
-        )
+    cursor.close()
+    db.close()
 
-        patient = cursor.fetchone()
-
-        # Patient does not exist
-        if patient is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Patient not found"
-            )
-
-        return {
-            "patient": patient
-        }
-
-    except HTTPException:
-        raise
-
-    except mysql.connector.Error as e:
+    # Patient not found
+    if patient is None:
         raise HTTPException(
-            status_code=500,
-            detail=f"Database error: {str(e)}"
+            status_code=404,
+            detail=f"Patient with ID {patient_id} not found"
         )
 
-    finally:
+    return {
+        'patient': patient
+    }
 
-        if cursor:
-            cursor.close()
+@app.get('/patients/{patient_id}')
+def get_patient_by_id(patient_id: int):
 
-        if db and db.is_connected():
-            db.close()
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
 
+    cursor.execute(
+        '''
+        SELECT
+            patient_id,
+            full_name,
+            DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
+            gender,
+            phone,
+            email,
+            address,
+            blood_group,
+            emergency_contact_name,
+            emergency_contact_phone,
+            DATE_FORMAT(created_at, '%d %b %Y') AS registered_on,
+            DATE_FORMAT(updated_at, '%d %b %Y') AS updated_on
+        FROM patient
+        WHERE patient_id = %s
+          AND is_deleted = 0
+        ''',
+        (patient_id,)
+    )
 
-            # ── ENDPOINT: Get Appointments by Patient ID ────────────────────────────────
-# URL: http://127.0.0.1:8000/patients/{patient_id}/appointments
-# Returns: All appointments linked to a specific patient
+    patient = cursor.fetchone()
 
-@app.get('/patients/{patient_id}/appointments')
+    cursor.close()
+    db.close()
+
+    if patient is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+
+    return {
+        "patient": patient
+    }
+@app.get("/patients/{patient_id}/appointments")
 def get_patient_appointments(patient_id: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
 
-    db = None
-    cursor = None
+    cursor.execute("""
+        SELECT
+            a.appointment_id,
+            a.patient_id,
+            p.full_name AS patient_name,
+            a.doctor_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.reason,
+            a.diagnosis,
+            a.notes,
+            a.status,
+            a.created_at
+        FROM appointment a
+        JOIN patient p
+            ON a.patient_id = p.patient_id
+        WHERE a.patient_id = %s
+        ORDER BY a.appointment_date DESC, a.appointment_time DESC
+    """, (patient_id,))
 
-    try:
-        db = get_db()
-        cursor = db.cursor(dictionary=True)
+    appointments = cursor.fetchall()
 
-        # JOIN appointment table with patient table using patient_id
-        cursor.execute(
-            '''
-            SELECT
-                a.appointment_id,
-                p.patient_id,
-                p.full_name AS patient_name,
-                a.doctor_id,
-                DATE_FORMAT(
-                    a.appointment_date,
-                    '%d %b %Y'
-                ) AS appointment_date,
-                TIME_FORMAT(
-                    a.appointment_time,
-                    '%h:%i %p'
-                ) AS appointment_time,
-                a.status
+    cursor.close()
+    db.close()
 
-            FROM appointment a
-
-            JOIN patient p
-                ON a.patient_id = p.patient_id
-
-            WHERE p.patient_id = %s
-
-            ORDER BY
-                a.appointment_date DESC,
-                a.appointment_time DESC
-            ''',
-            (patient_id,)
-        )
-
-        appointments = cursor.fetchall()
-
-        # If the patient has no appointments,
-        # return an empty list []
-        return {
-            "appointments": appointments
-        }
-
-    except mysql.connector.Error as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database error: {str(e)}"
-        )
-
-    finally:
-
-        if cursor:
-            cursor.close()
-
-        if db and db.is_connected():
-            db.close()
-
-
-# ============================================================
-# DOCTOR ANALYTICS
-# ============================================================
+    return {
+        "appointments": appointments
+    }
 
 @app.get("/analytics/doctors")
 def get_doctor_analytics():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
 
-    connection = None
-    cursor = None
+    cursor.execute("""
+        SELECT
+            doctor_name,
+            total_appointments
+        FROM vw_doctor_appointment_summary
+        ORDER BY total_appointments DESC
+    """)
 
-    try:
+    doctors = cursor.fetchall()
 
-        connection = get_db()
+    cursor.close()
+    db.close()
 
-        cursor = connection.cursor(dictionary=True)
-
-        query = """
-            SELECT
-                doctor_name,
-                total_appointments AS appointment_count
-            FROM vw_doctor_appointment_summary
-            ORDER BY total_appointments DESC
-        """
-
-        cursor.execute(query)
-
-        results = cursor.fetchall()
-
-        return results
-
-    except mysql.connector.Error as e:
-
-        print("Database Error:", e)
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database error: {str(e)}"
-        )
-
-    finally:
-
-        if cursor:
-            cursor.close()
-
-        if connection and connection.is_connected():
-            connection.close()
+    return doctors
