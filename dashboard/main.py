@@ -8,7 +8,7 @@
 # To run this file:
 #   uvicorn main:app --reload
 
-from fastapi import FastAPI                        # the web framework
+from fastapi import FastAPI, HTTPException                      # the web framework
 from fastapi.middleware.cors import CORSMiddleware # allows browser to call this API
 import mysql.connector                             # connects to MySQL
 
@@ -32,7 +32,7 @@ app.add_middleware(
 # We do not reuse a single connection because MySQL closes idle connections.
 def get_db():
     return mysql.connector.connect(
-        host="127.0.0.1",
+        host="localhost",
         port=3307,
         user="root",
         password="admin",
@@ -284,65 +284,146 @@ def get_blood_group_distribution():
 
     return {'blood_group_distribution': rows}
 
-
-    # ── ENDPOINT 8: Get Single Patient ───────────────────────────────────────────
+# ── ENDPOINT 8: Patient Details by ID ────────────────────────────────────────
 # URL: http://127.0.0.1:8000/patients/{patient_id}
-# Example: http://127.0.0.1:8000/patients/1
-# Returns: detailed information for one active patient
-
-from fastapi import HTTPException
-
+# Returns: Complete details of one active patient
 
 @app.get('/patients/{patient_id}')
 def get_patient_by_id(patient_id: int):
-    db = None
-    cursor = None
 
-    try:
-        db = get_db()
-        cursor = db.cursor(dictionary=True)
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
 
-        cursor.execute(
-            '''
-            SELECT
-                patient_id,
-                full_name,
-                gender,
-                blood_group,
-                DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
-                DATE_FORMAT(created_at, '%d %b %Y %h:%i %p') AS registered_on
-            FROM patient
-            WHERE patient_id = %s
-              AND is_deleted = 0
-            ''',
-            (patient_id,)
-        )
+    cursor.execute(
+        '''
+        SELECT
+            patient_id,
+            full_name,
+            DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
+            gender,
+            phone,
+            email,
+            address,
+            blood_group,
+            emergency_contact_name,
+            emergency_contact_phone,
+            DATE_FORMAT(created_at, '%d %b %Y') AS registered_on,
+            DATE_FORMAT(updated_at, '%d %b %Y') AS updated_on
+        FROM patient
+        WHERE patient_id = %s
+          AND is_deleted = 0
+        ''',
+        (patient_id,)
+    )
 
-        patient = cursor.fetchone()
+    patient = cursor.fetchone()
 
-        # If no patient exists with this ID
-        if patient is None:
-            raise HTTPException(
-                status_code=404,
-                detail=f'Patient with ID {patient_id} not found'
-            )
+    cursor.close()
+    db.close()
 
-        return {
-            'patient': patient
-        }
-
-    except HTTPException:
-        raise
-
-    except mysql.connector.Error as e:
+    # Patient not found
+    if patient is None:
         raise HTTPException(
-            status_code=500,
-            detail=f'Database error: {str(e)}'
+            status_code=404,
+            detail=f"Patient with ID {patient_id} not found"
         )
 
-    finally:
-        if cursor:
-            cursor.close()
+    return {
+        'patient': patient
+    }
 
-        if db and db.is_connected():
-            db.close()
+@app.get('/patients/{patient_id}')
+def get_patient_by_id(patient_id: int):
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        '''
+        SELECT
+            patient_id,
+            full_name,
+            DATE_FORMAT(date_of_birth, '%d %b %Y') AS date_of_birth,
+            gender,
+            phone,
+            email,
+            address,
+            blood_group,
+            emergency_contact_name,
+            emergency_contact_phone,
+            DATE_FORMAT(created_at, '%d %b %Y') AS registered_on,
+            DATE_FORMAT(updated_at, '%d %b %Y') AS updated_on
+        FROM patient
+        WHERE patient_id = %s
+          AND is_deleted = 0
+        ''',
+        (patient_id,)
+    )
+
+    patient = cursor.fetchone()
+
+    cursor.close()
+    db.close()
+
+    if patient is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+
+    return {
+        "patient": patient
+    }
+@app.get("/patients/{patient_id}/appointments")
+def get_patient_appointments(patient_id: int):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            a.appointment_id,
+            a.patient_id,
+            p.full_name AS patient_name,
+            a.doctor_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.reason,
+            a.diagnosis,
+            a.notes,
+            a.status,
+            a.created_at
+        FROM appointment a
+        JOIN patient p
+            ON a.patient_id = p.patient_id
+        WHERE a.patient_id = %s
+        ORDER BY a.appointment_date DESC, a.appointment_time DESC
+    """, (patient_id,))
+
+    appointments = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return {
+        "appointments": appointments
+    }
+
+@app.get("/analytics/doctors")
+def get_doctor_analytics():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            doctor_name,
+            total_appointments
+        FROM vw_doctor_appointment_summary
+        ORDER BY total_appointments DESC
+    """)
+
+    doctors = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return doctors
